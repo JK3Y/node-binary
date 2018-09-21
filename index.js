@@ -328,7 +328,45 @@ exports.parse = function parse (buffer) {
     self.eof = function () {
         return offset >= buffer.length;
     };
-    
+
+    self.setOffset = function (bytes) {
+        if (typeof bytes === 'string') {
+            bytes = vars.get(bytes);
+        }
+        offset = bytes;
+
+        return self;
+    };
+
+    self.sliceInto = function (name, start, size) {
+        if (typeof start === 'string') {
+            start = vars.get(start)
+        }
+        if (typeof size === 'string') {
+            size = vars.get(size);
+        }
+        var buf = buffer.slice(start, Math.min(buffer.length, start + size));
+        vars.set(name, buf);
+
+        return self;
+    };
+
+    self.magic = function (size, match) {
+        var buf = buffer.slice(offset, Math.min(buffer.length, offset + size));
+
+        if (buf.readInt32BE(0) !== match) {
+            throw new Error('magic doesn\'t match');
+        }
+
+        vars.set('magic', buf);
+        offset += size;
+        return self;
+    };
+
+    self.getSlice = function(start, size) {
+        return buffer.slice(start, Math.min(buffer.length, start + size));
+    }
+
     return self;
 };
 
